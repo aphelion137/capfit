@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: capfit
+Version: 0.1.0
+Summary: Split long chat screenshots into column-sized chunks and build 2-column PDFs.
+Author-email: Your Name <you@example.com>
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pillow>=10.2.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: typer[all]>=0.12.0
+
+# capfit
+
+긴 캡처 이미지를 **한글(HWP) 2단**에 맞게 자동 분할하고, **2단 PDF**까지 한 번에 생성하는 툴.
+
+## Install (권장: Conda 환경)
+```bash
+conda create -n capfit python=3.12 -y
+conda activate capfit
+pip install .

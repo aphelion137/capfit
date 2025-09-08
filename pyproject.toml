@@ -1,0 +1,20 @@
+[project]
+name = "capfit"
+version = "0.1.0"
+description = "Split long chat screenshots into column-sized chunks and build 2-column PDFs."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+license = { text = "MIT" }
+dependencies = [
+  "pillow>=10.2.0",
+  "numpy>=1.26.0",
+  "typer[all]>=0.12.0",
+]
+
+[project.scripts]
+capfit = "capfit.cli:app"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"

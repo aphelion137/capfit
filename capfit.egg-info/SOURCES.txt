@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+capfit.egg-info/PKG-INFO
+capfit.egg-info/SOURCES.txt
+capfit.egg-info/dependency_links.txt
+capfit.egg-info/entry_points.txt
+capfit.egg-info/requires.txt
+capfit.egg-info/top_level.txt
