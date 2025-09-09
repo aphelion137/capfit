@@ -11,6 +11,8 @@ capfit.egg-info/dependency_links.txt
 capfit.egg-info/entry_points.txt
 capfit.egg-info/requires.txt
 capfit.egg-info/top_level.txt
+capfit/web/__init__.py
+capfit/web/server.py
 capfit/web/static/app.js
 capfit/web/static/style.css
 capfit/web/templates/index.html

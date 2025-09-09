@@ -80,6 +80,7 @@ def build_pdf_two_columns(
     if not image_paths:
         raise ValueError("No images to build PDF.")
 
+    # 입력 순서 유지
     imgs = _load_images(image_paths)
     page_w, page_h, col_w, usable_h = compute_two_column_layout(
         dpi=dpi, margin=margin, gutter=gutter,
@@ -278,6 +279,8 @@ def build_pdf_two_columns_from_source(
     row_energy = 0.5 * rx + 0.5 * ry
 
     SEARCH_BAND = max(10, int(search_band))  # 버블 경계 탐색 폭
+    EXTEND_FACTOR = 3
+    PHOTO_GUARD_MIN = 0.35  # 이 비율보다 배경이 적으면(사진/스티커 가능성) 컷 회피
 
     def smart_cut(y_start: int, y_end: int) -> int:
         """y_end 바로 위쪽 밴드에서 '버블 사이 공백'을 우선 선택.
@@ -288,6 +291,33 @@ def build_pdf_two_columns_from_source(
         """
         if y_end >= H:
             return min(y_end, H)
+        def try_band(lo: int, hi: int) -> int | None:
+            band_bg = row_bg_ratio[lo : hi + 1]
+            band_run = row_bg_run_ratio[lo : hi + 1]
+
+            # 1순위: 배경 비율 높고(>=hi), 연속 배경구간도 충분(>=0.8)
+            cand_mask = (band_bg >= float(bg_ratio_hi)) & (band_run >= 0.8)
+            if cand_mask.any():
+                idxs = np.where(cand_mask)[0]
+                end = int(idxs[-1])
+                start = end
+                while start - 1 >= 0 and cand_mask[start - 1]:
+                    start -= 1
+                mid = (start + end) // 2
+                return lo + int(mid)
+
+            # 2순위: 배경 비율 중간(>=mid) + 연속 배경구간 완화(>=0.6)
+            cand_mask = (band_bg >= float(bg_ratio_mid)) & (band_run >= 0.6)
+            if cand_mask.any():
+                idxs = np.where(cand_mask)[0]
+                end = int(idxs[-1])
+                start = end
+                while start - 1 >= 0 and cand_mask[start - 1]:
+                    start -= 1
+                mid = (start + end) // 2
+                return lo + int(mid)
+            return None
+
         lo = max(0, y_end - SEARCH_BAND)
         hi = min(H - 1, y_end)
         # 최소 높이 가드(현재 조각 높이의 일정 비율 이상 확보)
@@ -296,35 +326,37 @@ def build_pdf_two_columns_from_source(
         if lo >= hi:
             return y_end
 
-        band_bg = row_bg_ratio[lo : hi + 1]
-        band_run = row_bg_run_ratio[lo : hi + 1]
-
-        # 1순위: 배경 비율 높고(>=hi), 연속 배경구간도 충분(>=0.8)
-        cand_mask = (band_bg >= float(bg_ratio_hi)) & (band_run >= 0.8)
-        if cand_mask.any():
-            idxs = np.where(cand_mask)[0]
-            end = int(idxs[-1])
-            start = end
-            while start - 1 >= 0 and cand_mask[start - 1]:
-                start -= 1
-            mid = (start + end) // 2
-            return lo + int(mid)
-
-        # 2순위: 배경 비율 중간(>=mid) + 연속 배경구간 완화(>=0.6)
-        cand_mask = (band_bg >= float(bg_ratio_mid)) & (band_run >= 0.6)
-        if cand_mask.any():
-            idxs = np.where(cand_mask)[0]
-            end = int(idxs[-1])
-            start = end
-            while start - 1 >= 0 and cand_mask[start - 1]:
-                start -= 1
-            mid = (start + end) // 2
-            return lo + int(mid)
+        # 1~2순위 컷 시도
+        cut = try_band(lo, hi)
+        if cut is not None:
+            return cut
+        # 확장 밴드로 재시도(사진/스티커로 공백이 멀리 위치한 경우)
+        ext = SEARCH_BAND * EXTEND_FACTOR
+        lo2 = max(0, y_end - ext)
+        hi2 = min(H - 1, y_end + ext // 3)  # 약간 아래까지 허용
+        cut = try_band(lo2, hi2)
+        if cut is not None:
+            return cut
 
         # 3순위: 에너지 최소(라인/텍스트 절단 최소화 시도)
         band_energy = row_energy[lo : hi + 1]
         idx = int(np.argmin(band_energy))
         cut = lo + idx
+        # 사진 구간 가드: 배경이 거의 없는 행에서는 조금 더 탐색해서 배경이 있는 곳으로 이동
+        if row_bg_ratio[cut] < PHOTO_GUARD_MIN:
+            # 위로 안전한 곳 탐색
+            up = cut
+            while up > y_start and row_bg_ratio[up] < PHOTO_GUARD_MIN:
+                up -= 1
+            if row_bg_ratio[up] >= PHOTO_GUARD_MIN:
+                return max(y_start + 1, up)
+            # 아래로 소폭 이동(마지막 조각 보호)
+            down = cut
+            lim = min(H - 1, cut + SEARCH_BAND)
+            while down < lim and row_bg_ratio[down] < PHOTO_GUARD_MIN:
+                down += 1
+            if row_bg_ratio[down] >= PHOTO_GUARD_MIN:
+                return max(y_start + 1, down)
         return max(y_start + 1, cut - 2)
 
     # 스트리밍 조립: 메모리 고정 사용량, 불필요한 리스트 생성 없음
@@ -353,6 +385,192 @@ def build_pdf_two_columns_from_source(
         pages.append(page)
 
     # 저장
+    first, rest = pages[0], pages[1:] if len(pages) > 1 else []
+    os.makedirs(os.path.dirname(out_pdf) or ".", exist_ok=True)
+    first.save(out_pdf, save_all=True, append_images=rest, resolution=dpi)
+    return out_pdf
+
+
+def build_pdf_two_columns_from_sources(
+    image_paths: List[str],
+    out_pdf: str,
+    *,
+    margin: int = 60,
+    gutter: int = 50,
+    dpi: int = 300,
+    page_width: Optional[int] = None,
+    page_height: Optional[int] = None,
+    fast: bool = False,
+    # 스마트 컷 튜닝 파라미터 (from_source와 동일하게 유지)
+    search_band: int = 60,
+    bg_strip: int = 12,
+    bg_thresh: int = 18,
+    bg_ratio_hi: float = 0.85,
+    bg_ratio_mid: float = 0.70,
+    min_height_ratio: float = 0.60,
+    sample_stride: int = 4,
+) -> str:
+    """여러 장의 긴 스크린샷을 세로로 이어 붙여 한 장처럼 처리하여
+    A4 세로 2단 PDF를 생성한다.
+
+    - 각 이미지는 먼저 칼럼 폭(col_w)에 맞춰 리사이즈 후 세로로 연결
+    - 이후 from_source와 동일한 스마트 컷 알고리즘으로 페이지 조각 생성
+    """
+    if not image_paths:
+        raise ValueError("No images to build PDF.")
+
+    page_w, page_h, col_w, usable_h = compute_two_column_layout(
+        dpi=dpi, margin=margin, gutter=gutter,
+        page_width=page_width, page_height=page_height,
+    )
+
+    # 칼럼 폭으로 리사이즈하며 총 높이 계산
+    resized: List[Image.Image] = []
+    total_h = 0
+    for p in image_paths:
+        im = Image.open(p).convert("RGB")
+        scale = col_w / im.width
+        nh = max(1, int(round(im.height * scale)))
+        rim = im.resize((col_w, nh), _get_resample(fast))
+        resized.append(rim)
+        total_h += nh
+
+    # 세로로 이어 붙인 합성 이미지 구성
+    src = Image.new("RGB", (col_w, total_h), (255, 255, 255))
+    y = 0
+    for rim in resized:
+        src.paste(rim, (0, y))
+        y += rim.height
+
+    # from_source 내부와 동일 로직 재사용을 위해 임시 파일 없이 직접 처리
+    # 아래는 build_pdf_two_columns_from_source를 거의 그대로 복사하여 적용
+
+    src_gray_full = np.array(src.convert("L"))
+
+    strip = max(2, int(bg_strip))
+    left_strip = src_gray_full[:, :strip].reshape(-1)
+    right_strip = src_gray_full[:, -strip:].reshape(-1)
+    bg_samples = np.concatenate([left_strip, right_strip])
+    bg_value = int(np.median(bg_samples))
+    BG_THRESH = max(1, int(bg_thresh))
+
+    stride = max(1, int(sample_stride))
+    sub = src_gray_full[:, ::stride]
+    w_sub = sub.shape[1]
+    q = max(1, w_sub // 4)
+    sub_lr = np.concatenate([sub[:, :q], sub[:, -q:]], axis=1)
+    row_bg_mask = (np.abs(sub_lr - bg_value) <= BG_THRESH)
+    row_bg_ratio = row_bg_mask.mean(axis=1)
+
+    def _longest_run_len(mask_row: np.ndarray) -> int:
+        m = 0
+        c = 0
+        for v in mask_row:
+            if v:
+                c += 1
+                if c > m:
+                    m = c
+            else:
+                c = 0
+        return m
+
+    H_rows = row_bg_mask.shape[0]
+    W_sub = row_bg_mask.shape[1]
+    row_bg_run_ratio = np.empty(H_rows, dtype=np.float32)
+    for i in range(H_rows):
+        row_bg_run_ratio[i] = _longest_run_len(row_bg_mask[i]) / max(1, W_sub)
+
+    row_energy_x = np.abs(np.diff(src_gray_full, axis=1)).sum(axis=1)
+    dy = np.abs(np.diff(src_gray_full, axis=0))
+    row_energy_y = np.vstack([dy[0:1, :], dy]).sum(axis=1)
+    rx = row_energy_x / (row_energy_x.max() + 1e-8)
+    ry = row_energy_y / (row_energy_y.max() + 1e-8)
+    row_energy = 0.5 * rx + 0.5 * ry
+
+    SEARCH_BAND = max(10, int(search_band))
+    EXTEND_FACTOR = 3
+    PHOTO_GUARD_MIN = 0.35
+
+    def smart_cut(y_start: int, y_end: int) -> int:
+        H = src.height
+        if y_end >= H:
+            return min(y_end, H)
+        lo = max(0, y_end - SEARCH_BAND)
+        hi = min(H - 1, y_end)
+
+        def try_band(lo_: int, hi_: int) -> int | None:
+            band_bg = row_bg_ratio[lo_ : hi_ + 1]
+            band_run = row_bg_run_ratio[lo_ : hi_ + 1]
+            cand_mask = (band_bg >= float(bg_ratio_hi)) & (band_run >= 0.8)
+            if cand_mask.any():
+                idxs = np.where(cand_mask)[0]
+                end = int(idxs[-1])
+                start = end
+                while start - 1 >= 0 and cand_mask[start - 1]:
+                    start -= 1
+                mid = (start + end) // 2
+                return lo_ + int(mid)
+            cand_mask = (band_bg >= float(bg_ratio_mid)) & (band_run >= 0.6)
+            if cand_mask.any():
+                idxs = np.where(cand_mask)[0]
+                end = int(idxs[-1])
+                start = end
+                while start - 1 >= 0 and cand_mask[start - 1]:
+                    start -= 1
+                mid = (start + end) // 2
+                return lo_ + int(mid)
+            return None
+
+        cut = try_band(lo, hi)
+        if cut is not None:
+            return cut
+        ext = SEARCH_BAND * EXTEND_FACTOR
+        lo2 = max(0, y_end - ext)
+        hi2 = min(src.height - 1, y_end + ext // 3)
+        cut = try_band(lo2, hi2)
+        if cut is not None:
+            return cut
+
+        band_energy = row_energy[lo : hi + 1]
+        idx = int(np.argmin(band_energy))
+        cut = lo + idx
+        if row_bg_ratio[cut] < PHOTO_GUARD_MIN:
+            up = cut
+            while up > y_start and row_bg_ratio[up] < PHOTO_GUARD_MIN:
+                up -= 1
+            if row_bg_ratio[up] >= PHOTO_GUARD_MIN:
+                return max(y_start + 1, up)
+            down = cut
+            lim = min(src.height - 1, cut + SEARCH_BAND)
+            while down < lim and row_bg_ratio[down] < PHOTO_GUARD_MIN:
+                down += 1
+            if row_bg_ratio[down] >= PHOTO_GUARD_MIN:
+                return max(y_start + 1, down)
+        return max(y_start + 1, cut - 2)
+
+    pages: List[Image.Image] = []
+    page = Image.new("RGB", (page_w, page_h), (255, 255, 255))
+    left_slot = True
+
+    y = 0
+    H = src.height
+    while y < H:
+        y2 = min(y + usable_h, H)
+        y_cut = smart_cut(y, y2) if y2 < H else y2
+        crop = src.crop((0, y, col_w, y_cut))
+        if left_slot:
+            page.paste(crop, (margin, margin))
+            left_slot = False
+        else:
+            page.paste(crop, (margin + col_w + gutter, margin))
+            pages.append(page)
+            page = Image.new("RGB", (page_w, page_h), (255, 255, 255))
+            left_slot = True
+        y = y_cut
+
+    if not left_slot:
+        pages.append(page)
+
     first, rest = pages[0], pages[1:] if len(pages) > 1 else []
     os.makedirs(os.path.dirname(out_pdf) or ".", exist_ok=True)
     first.save(out_pdf, save_all=True, append_images=rest, resolution=dpi)
