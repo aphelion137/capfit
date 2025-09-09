@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capfit · 변환 결과</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">🐱 CAPFIT</div>
+      <div class="subtitle">변환 결과</div>
+    </header>
+
+    <main class="container">
+      <section class="card center">
+        {% if ready %}
+          <h2>PDF 생성 완료</h2>
+          <a class="btn primary" href="/download/{{ job_id }}">다운로드</a>
+          <div class="spacer"></div>
+          <a class="btn" href="/">다른 파일 변환</a>
+        {% else %}
+          <h2>처리 중...</h2>
+          <p>잠시 후 자동 새로고침 됩니다.</p>
+          <meta http-equiv="refresh" content="1">
+        {% endif %}
+      </section>
+      <footer class="footer">© 2025 Capfit</footer>
+    </main>
+  </body>
+  </html>
+

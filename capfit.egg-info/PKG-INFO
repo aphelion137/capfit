@@ -9,6 +9,10 @@ Description-Content-Type: text/markdown
 Requires-Dist: pillow>=10.2.0
 Requires-Dist: numpy>=1.26.0
 Requires-Dist: typer[all]>=0.12.0
+Requires-Dist: fastapi>=0.110.0
+Requires-Dist: uvicorn[standard]>=0.23.0
+Requires-Dist: jinja2>=3.1.2
+Requires-Dist: python-multipart>=0.0.9
 
 # capfit
 
@@ -19,3 +23,12 @@ Requires-Dist: typer[all]>=0.12.0
 conda create -n capfit python=3.12 -y
 conda activate capfit
 pip install .
+```
+
+## Usage
+```bash
+capfit run --input "examples/test.jpeg" \
+  --outdir "out" --column-width 1000 --column-height 1400 \
+  --overlap 40 --smart-cut \
+  --make-pdf --pdf-mode two_columns --margin 60 --gutter 50 --dpi 300
+```

@@ -1,8 +1,17 @@
 README.md
 pyproject.toml
+capfit/__init__.py
+capfit/cli.py
+capfit/pdf_builder.py
+capfit/splitter.py
+capfit/utils.py
 capfit.egg-info/PKG-INFO
 capfit.egg-info/SOURCES.txt
 capfit.egg-info/dependency_links.txt
 capfit.egg-info/entry_points.txt
 capfit.egg-info/requires.txt
 capfit.egg-info/top_level.txt
+capfit/web/static/app.js
+capfit/web/static/style.css
+capfit/web/templates/index.html
+capfit/web/templates/result.html

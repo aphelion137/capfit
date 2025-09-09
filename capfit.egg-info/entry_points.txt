@@ -1,2 +1,3 @@
 [console_scripts]
 capfit = capfit.cli:app
+capfit-web = capfit.web.server:main
