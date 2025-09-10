@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 import uuid
 from pathlib import Path
-from fastapi import FastAPI, Request, UploadFile, File, Form
+from fastapi import FastAPI, Request, UploadFile, File, Form, BackgroundTasks
 import shutil
 from typing import List
 from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
@@ -44,8 +44,9 @@ async def index(request: Request):
 @app.post("/upload")
 async def upload(
     request: Request,
+    background_tasks: BackgroundTasks,
     files: List[UploadFile] = File(...),
-    dpi: int = Form(300),
+    dpi: int = Form(220),
     margin: int = Form(60),
     gutter: int = Form(50),
 ):
@@ -67,30 +68,37 @@ async def upload(
             shutil.copyfileobj(up.file, f, length=1024 * 1024)
         saved_paths.append(str(input_i))
 
-    # 업로드 후 즉시 변환까지 동기 처리 → 결과 페이지로 리다이렉트(가장 단순/신뢰 경로)
+    # DPI 상한 220 적용
+    safe_dpi = max(1, min(int(dpi), 220))
+
+    # 업로드 직후 비동기 변환 예약 → 즉시 결과 페이지로 리다이렉트
     output_path = job_dir / "output.pdf"
-    if len(saved_paths) == 1:
-        build_pdf_two_columns_from_source(
-            saved_paths[0],
-            str(output_path),
-            margin=margin,
-            gutter=gutter,
-            dpi=dpi,
-            page_width=None,
-            page_height=None,
-            fast=False,
-        )
-    else:
-        build_pdf_two_columns_from_sources(
-            saved_paths,
-            str(output_path),
-            margin=margin,
-            gutter=gutter,
-            dpi=dpi,
-            page_width=None,
-            page_height=None,
-            fast=False,
-        )
+
+    def _convert(paths: List[str]) -> None:
+        if len(paths) == 1:
+            build_pdf_two_columns_from_source(
+                paths[0],
+                str(output_path),
+                margin=margin,
+                gutter=gutter,
+                dpi=safe_dpi,
+                page_width=None,
+                page_height=None,
+                fast=False,
+            )
+        else:
+            build_pdf_two_columns_from_sources(
+                paths,
+                str(output_path),
+                margin=margin,
+                gutter=gutter,
+                dpi=safe_dpi,
+                page_width=None,
+                page_height=None,
+                fast=False,
+            )
+
+    background_tasks.add_task(_convert, saved_paths)
 
     return RedirectResponse(url=f"/result/{job_id}", status_code=303)
 

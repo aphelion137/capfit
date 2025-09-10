@@ -32,7 +32,7 @@
             <div class="grid controls-grid">
               <div class="field">
                 <label for="dpi">DPI</label>
-                <input id="dpi" name="dpi" type="number" value="300" min="100" max="600" />
+                <input id="dpi" name="dpi" type="number" value="220" min="72" max="220" />
               </div>
               <div class="field">
                 <label for="margin">여백(px)</label>
@@ -76,6 +76,9 @@
 
       <footer class="footer">© 2025 Capfit · v{{ version }}</footer>
     </main>
+    <div class="mobile-cta">
+      <button class="btn primary" type="submit" form="upload-form">PDF로 변환</button>
+    </div>
     
     <script src="/static/app.js"></script>
   </body>

@@ -22,7 +22,7 @@ def run(
     pdf_path: str = typer.Option("", help="PDF 저장 경로(미지정 시 out/<입력이름>.pdf)"),
     margin: int = typer.Option(60, help="PDF 페이지 여백(px)"),
     gutter: int = typer.Option(50, help="2단 사이 간격(px) - two_columns 모드에서만 사용"),
-    dpi: int = typer.Option(300, help="PDF 메타 DPI 및 페이지 픽셀 계산 기준"),
+    dpi: int = typer.Option(220, help="PDF 메타 DPI 및 페이지 픽셀 계산 기준(최대 220)"),
     page_width: int = typer.Option(0, help="PDF 페이지 가로(px). 0이면 A4 세로(DPI 기준)"),
     page_height: int = typer.Option(0, help="PDF 페이지 세로(px). 0이면 A4 세로(DPI 기준)"),
     optimize_slices: bool = typer.Option(True, help="PDF 2단에 맞춰 분할 폭/높이 자동 최적화"),
@@ -32,6 +32,8 @@ def run(
     # 분할 폭/높이를 페이지 레이아웃에 맞춰 최적화
     eff_column_width = column_width
     eff_column_height = column_height
+    # DPI 상한 적용
+    dpi = min(int(dpi), 220)
     if make_pdf and pdf_mode == "two_columns" and optimize_slices:
         _, _, col_w, usable_h = compute_two_column_layout(
             dpi=dpi,

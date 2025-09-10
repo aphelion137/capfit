@@ -1,6 +1,6 @@
 [project]
 name = "capfit"
-version = "0.1.13"
+version = "0.1.14"
 description = "Split long chat screenshots into column-sized chunks and build 2-column PDFs."
 readme = "README.md"
 requires-python = ">=3.10"
