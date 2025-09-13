@@ -24,6 +24,7 @@ JOBS_DIR = BASE_DIR / "jobs"
 
 app = FastAPI(title="Capfit Web", description="긴 캡처를 A4 세로 2단 PDF로 변환")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+os.makedirs(JOBS_DIR, exist_ok=True)
 app.mount("/jobs", StaticFiles(directory=str(JOBS_DIR)), name="jobs")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
