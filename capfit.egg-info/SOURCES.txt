@@ -10,10 +10,6 @@ cli/__init__.py
 cli/app.py
 desktop/__init__.py
 desktop/main.py
-desktop/gui/__init__.py
-desktop/gui/main_window.py
-desktop/gui/preview_widget.py
-desktop/gui/settings_dialog.py
 shared/__init__.py
 shared/cli/__init__.py
 shared/cli/base.py

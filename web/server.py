@@ -79,8 +79,14 @@ async def upload(
     files_sorted = sorted(list(files), key=lambda u: _numeric_key(getattr(u, "filename", "")))
 
     for idx, up in enumerate(files_sorted, start=1):
-        ext = os.path.splitext(up.filename or "upload.png")[1] or ".png"
-        input_i = job_dir / f"input_{idx:03d}{ext}"
+        # 원본 파일명 사용 (안전한 파일명으로 변환)
+        original_name = up.filename or "upload.png"
+        # 파일명에서 안전하지 않은 문자 제거
+        safe_name = re.sub(r'[<>:"/\\|?*]', '_', original_name)
+        # 중복 방지를 위해 인덱스 추가
+        name_parts = os.path.splitext(safe_name)
+        safe_filename = f"{name_parts[0]}_{idx:03d}{name_parts[1]}"
+        input_i = job_dir / safe_filename
         # Stream to disk to avoid loading whole file in memory
         with open(input_i, "wb") as f:
             up.file.seek(0)
@@ -97,7 +103,10 @@ async def review(request: Request, job_id: str, dpi: int = 220, margin: int = 60
     job_dir = JOBS_DIR / job_id
     if not job_dir.exists():
         return HTMLResponse("잘못된 작업입니다.", status_code=404)
-    files = sorted([p.name for p in job_dir.iterdir() if p.name.startswith("input_")])
+    # 모든 이미지 파일 찾기 (output.pdf 제외)
+    image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
+    files = sorted([p.name for p in job_dir.iterdir() 
+                   if p.is_file() and p.suffix.lower() in image_extensions])
     base_url = str(request.base_url).rstrip('/')
     page_url = str(request.url)
     return templates.TemplateResponse(
@@ -121,7 +130,10 @@ async def convert(background_tasks: BackgroundTasks, job_id: str, order: str = F
     job_dir = JOBS_DIR / job_id
     if not job_dir.exists():
         return HTMLResponse("유효하지 않은 작업 ID입니다.", status_code=404)
-    all_files = sorted([p for p in job_dir.iterdir() if p.is_file() and p.name.startswith("input_")])
+    # 모든 이미지 파일 찾기 (output.pdf 제외)
+    image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
+    all_files = sorted([p for p in job_dir.iterdir() 
+                       if p.is_file() and p.suffix.lower() in image_extensions])
     name_to_path = {p.name: str(p) for p in all_files}
     ordered: List[str] = []
     if order:
@@ -199,7 +211,7 @@ def main() -> None:
 
     host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", "8000"))
-    uvicorn.run("capfit.web.server:app", host=host, port=port, reload=False)
+    uvicorn.run("web.server:app", host=host, port=port, reload=False)
 
 
 @app.get("/og.png")

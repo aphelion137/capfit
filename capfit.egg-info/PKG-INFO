@@ -13,6 +13,7 @@ Requires-Dist: fastapi>=0.110.0
 Requires-Dist: uvicorn[standard]>=0.23.0
 Requires-Dist: jinja2>=3.1.2
 Requires-Dist: python-multipart>=0.0.9
+Requires-Dist: requests>=2.25.0
 
 # Capfit
 
@@ -32,14 +33,14 @@ capfit-web
 # 브라우저에서 http://localhost:8000 접속
 ```
 
-### 🖥️ 데스크톱 GUI 버전
+### 🖥️ 데스크톱 버전 (웹 서버 + 브라우저)
 ```bash
 # 설치
 conda create -n capfit python=3.12 -y
 conda activate capfit
 pip install .
 
-# 실행
+# 실행 (자동으로 웹 서버 시작 + 브라우저 열기)
 capfit-desktop
 ```
 
@@ -63,6 +64,7 @@ capfit run --input "examples/test.jpeg" \
 ```bash
 python build_desktop.py
 # dist/ 폴더에 독립 실행 파일 생성
+# 실행 파일을 더블클릭하면 자동으로 웹 서버가 시작되고 브라우저가 열림
 ```
 
 ## 🏗️ 프로젝트 구조
@@ -73,6 +75,6 @@ capfit/
 │   ├── core/        # 이미지 처리, PDF 생성
 │   └── cli/         # CLI 공통 기능
 ├── web/             # 웹 버전 (FastAPI)
-├── desktop/         # 데스크톱 버전 (tkinter GUI)
+├── desktop/         # 데스크톱 버전 (웹 서버 + 브라우저)
 └── cli/             # CLI 버전
 ```
