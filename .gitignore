@@ -21,3 +21,8 @@ __pycache__/
 *.egg-info/
 build/
 dist/
+
+# Python 패키징 파일
+*.egg-info/
+build/
+dist/

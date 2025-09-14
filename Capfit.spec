@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['desktop/main.py'],
+    ['desktop\\main.py'],
     pathex=[],
     binaries=[],
     datas=[('shared', 'shared'), ('web', 'web')],
