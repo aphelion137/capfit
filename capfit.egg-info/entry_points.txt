@@ -1,3 +1,4 @@
 [console_scripts]
-capfit = capfit.cli:app
-capfit-web = capfit.web.server:main
+capfit = cli.app:main
+capfit-desktop = desktop.main:main
+capfit-web = web.server:main

@@ -17,8 +17,9 @@ dependencies = [
 ]
 
 [project.scripts]
-capfit = "capfit.cli:app"
-capfit-web = "capfit.web.server:main"
+capfit = "cli.app:main"
+capfit-web = "web.server:main"
+capfit-desktop = "desktop.main:main"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
@@ -28,10 +29,13 @@ build-backend = "setuptools.build_meta"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["capfit*"]
+include = ["shared*", "web*", "desktop*", "cli*"]
 
 [tool.setuptools.package-data]
-capfit = [
-  "web/templates/*.html",
-  "web/static/*",
+web = [
+  "templates/*.html",
+  "static/*",
+]
+desktop = [
+  "assets/*",
 ]

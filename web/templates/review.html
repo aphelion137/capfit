@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1020" />
+    <title>Capfit · 순서 확인</title>
+    <meta name="description" content="업로드한 캡처를 세로 미리보기로 확인하고 순서를 조정하세요" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <style>
+      :root { --strip-h: 320px; }
+      .review-wrap { max-width: 1080px; margin: 0 auto; padding: 16px; }
+      .review-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+      @media (min-width: 900px) { .review-grid { grid-template-columns: 1fr 360px; } }
+      .preview-long { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 0; max-height: 70vh; overflow: auto; }
+      .strip { position: relative; border: none; border-radius: 0; overflow: hidden; background: transparent; margin: 0; }
+      .strip img { width: 100%; height: auto; display: block; }
+      .strip .badge { position: absolute; top: 6px; left: 6px; background: var(--accent); color: #0b1020; font-weight: 700; font-size: 12px; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
+      .strip .toolbar { position: absolute; right: 6px; top: 6px; display: flex; gap: 6px; padding: 4px; border-radius: 10px; background: rgba(11,16,32,0.55); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.18); z-index: 2; }
+      .strip .toolbar .tbtn { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #0b1020; border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
+      .strip .toolbar .tbtn:hover { filter: brightness(1.05); }
+      .strip.selected { outline: 3px solid var(--accent); box-shadow: 0 0 0 4px rgba(74,144,226,0.25) inset; }
+      .slot { position: relative; height: 0; margin: 0; display: none; }
+      .slot .slotbtn {
+        position: absolute; top: 0; left: 0; right: 0; transform: translateY(-50%);
+        height: 36px; line-height: 36px; text-align: center; z-index: 5;
+        border-radius: 10px; border: 2px dashed var(--accent);
+        color: var(--text); background: rgba(74,144,226,0.18);
+        cursor: pointer; font-weight: 800; font-size: 13px; letter-spacing: .2px;
+        box-shadow: 0 6px 16px rgba(0,0,0,.35);
+      }
+      .slot .slotbtn:hover { background: rgba(74,144,226,0.28); }
+      .slot.show { display: block; }
+      .side { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; position: sticky; top: 16px; max-height: 70vh; overflow: auto; }
+      .side h3 { margin-top: 0; }
+      .side .btn { width: 100%; }
+      .dragging { opacity: .7; }
+      .dropzone-rev { border: 2px dashed var(--accent); border-radius: 12px; padding: 6px; }
+      .thumbs { display: grid; gap: 6px; max-height: 260px; overflow: auto; border-top: 1px solid var(--border); padding-top: 8px; }
+      .titem { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.03); cursor: pointer; }
+      .titem:hover { background: rgba(255,255,255,0.06); }
+      .titem img { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; }
+      .titem .no { background: var(--accent); color: #0b1020; border-radius: 999px; font-weight: 800; font-size: 12px; padding: 2px 6px; }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">🐱 CAPFIT</div>
+      <div class="subtitle">순서 확인 · 미리보기</div>
+    </header>
+
+    <main class="review-wrap">
+      <div class="review-grid">
+        <section class="preview-long" id="list">
+          {% for fname in files %}
+          <div class="strip" data-name="{{ fname }}">
+            <span class="badge">{{ loop.index }}</span>
+            <div class="toolbar">
+              <button class="tbtn to-top" type="button">맨위</button>
+              <button class="tbtn up" type="button">위로</button>
+              <button class="tbtn down" type="button">아래로</button>
+              <button class="tbtn to-bottom" type="button">맨아래</button>
+              <button class="tbtn pick" type="button">선택</button>
+            </div>
+            <img src="/jobs/{{ job_id }}/{{ fname }}" alt="{{ fname }}" loading="lazy" />
+          </div>
+          {% endfor %}
+        </section>
+        <aside class="side">
+          <h3>순서가 맞나요?</h3>
+          <form method="post" action="/convert/{{ job_id }}" id="convert-form">
+            <input type="hidden" name="order" id="order" />
+            <input type="hidden" name="dpi" value="{{ dpi }}" />
+            <input type="hidden" name="margin" value="{{ margin }}" />
+            <input type="hidden" name="gutter" value="{{ gutter }}" />
+            <button class="btn primary" type="submit">PDF로 변환</button>
+            <div class="spacer"></div>
+            <a class="btn" href="/">처음으로</a>
+          </form>
+          <div class="spacer"></div>
+          <h3>빠른 점프</h3>
+          <div id="thumbs" class="thumbs"></div>
+        </aside>
+      </div>
+      <footer class="footer">© 2025 Capfit · v{{ version }}</footer>
+    </main>
+
+    <script>
+      (function(){
+        const list = document.getElementById('list');
+        const orderInput = document.getElementById('order');
+        let selected = null; // selected filename
+
+        function strips(){ return Array.from(list.querySelectorAll('.strip')); }
+        function slots(){ return Array.from(list.querySelectorAll('.slot')); }
+        function removeSlots(){ slots().forEach(s => s.remove()); }
+        function buildSlots(){
+          const items = strips();
+          removeSlots();
+          items.forEach((node, i)=>{
+            const slot = document.createElement('div');
+            slot.className = 'slot show';
+            slot.dataset.idx = String(i);
+            slot.innerHTML = '<button class="slotbtn" type="button">여기에 삽입</button>';
+            list.insertBefore(slot, node);
+          });
+          const end = document.createElement('div');
+          end.className = 'slot show';
+          end.dataset.idx = String(items.length);
+          end.innerHTML = '<button class="slotbtn" type="button">여기에 삽입</button>';
+          list.appendChild(end);
+        }
+
+        // Build initial ORDER from DOM
+        let ORDER = strips().map(el => el.getAttribute('data-name'));
+
+        function render() {
+          // Rebuild list from ORDER for deterministic state
+          list.innerHTML = '';
+          ORDER.forEach((name, i) => {
+            const d = document.createElement('div'); d.className='strip'; d.setAttribute('data-name', name);
+            d.innerHTML = `
+              <span class="badge">${i+1}</span>
+              <div class="toolbar">
+                <button class="tbtn to-top" type="button">맨위</button>
+                <button class="tbtn up" type="button">위로</button>
+                <button class="tbtn down" type="button">아래로</button>
+                <button class="tbtn to-bottom" type="button">맨아래</button>
+                <button class="tbtn pick" type="button">선택</button>
+              </div>
+              <img src="/jobs/{{ job_id }}/${encodeURIComponent(name)}" alt="${name}" />
+            `;
+            if (selected && selected === name) d.classList.add('selected');
+            list.appendChild(d);
+          });
+          if (selected) buildSlots(); else removeSlots();
+          buildThumbs();
+        }
+
+        function clearSelect(){ selected = null; removeSlots(); render(); }
+
+        function moveTo(name, targetIdx){
+          const cur = ORDER.indexOf(name);
+          if (cur === -1) return;
+          let t = Math.max(0, Math.min(targetIdx, ORDER.length - 1));
+          if (t > cur) t -= 1; // after removal, index shifts left
+          const item = ORDER.splice(cur, 1)[0];
+          ORDER.splice(t, 0, item);
+          render();
+        }
+        function moveUp(name){ const i = ORDER.indexOf(name); if (i > 0) { [ORDER[i-1], ORDER[i]] = [ORDER[i], ORDER[i-1]]; render(); } }
+        function moveDown(name){ const i = ORDER.indexOf(name); if (i >= 0 && i < ORDER.length-1) { [ORDER[i], ORDER[i+1]] = [ORDER[i+1], ORDER[i]]; render(); } }
+        function moveTop(name){ moveTo(name, 0); }
+        function moveBottom(name){ moveTo(name, ORDER.length-1); }
+        // Toolbar actions
+        list.addEventListener('click', (e)=>{
+          const strip = e.target.closest('.strip');
+          if (e.target.classList.contains('pick')){
+            const name = strip?.getAttribute('data-name');
+            if (!name) return;
+            if (selected === name) { clearSelect(); return; }
+            selected = name; render(); return;
+          }
+          if (!strip) return;
+          const name = strip.getAttribute('data-name');
+          const idx = ORDER.indexOf(name);
+          if (e.target.classList.contains('up')){
+            moveUp(name);
+          } else if (e.target.classList.contains('down')){
+            moveDown(name);
+          } else if (e.target.classList.contains('to-top')){
+            moveTop(name);
+          } else if (e.target.classList.contains('to-bottom')){
+            moveBottom(name);
+          }
+        });
+        // Slot insertion when selected exists
+        list.addEventListener('click', (e)=>{
+          const slot = e.target.closest('.slot');
+          if (!slot || !selected) return;
+          const idx = parseInt(slot.getAttribute('data-idx') || '0', 10); // position before element at idx
+          // For slots we want exact final position; use moveTo
+          moveTo(selected, Math.min(idx, ORDER.length-1));
+          selected = null;
+          render();
+          });
+        // Quick jump thumbnails
+        const thumbs = document.getElementById('thumbs');
+        
+        // Cross-browsers scroll helper
+        function scrollToChild(container, el) {
+          if (!container || !el) return;
+          const cRect = container.getBoundingClientRect();
+          const eRect = el.getBoundingClientRect();
+          const offset = (eRect.top - cRect.top) + container.scrollTop - 8;
+          try { container.scrollTo({ top: offset, behavior: 'smooth' }); }
+          catch(_) { container.scrollTop = offset; }
+        }
+
+        function jumpTo(name){
+          const target = Array.from(list.querySelectorAll('.strip')).find(el => el.getAttribute('data-name') === name);
+          if (!target) return;
+          try { target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' }); } catch(_) {}
+          scrollToChild(list, target);
+        }
+function buildThumbs(){
+          if (!thumbs) return;
+          thumbs.innerHTML = '';
+          ORDER.forEach((name, i)=>{
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'titem';
+            const src = `/jobs/{{ job_id }}/${encodeURIComponent(name)}`;
+            btn.innerHTML = `<span class=\"no\">${i+1}</span><img src=\"${src}\" alt=\"${name}\" loading=\"lazy\"/><span style=\"font-size:12px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${name}</span>`;
+            btn.addEventListener('click', ()=>{ jumpTo(name); }, { passive: true });
+            thumbs.appendChild(btn);
+          });
+        }
+
+        // Prepare submit
+        const form = document.getElementById('convert-form');
+        form.addEventListener('submit', ()=>{
+          orderInput.value = ORDER.join(',');
+        });
+
+        // First paint (normalize DOM listeners)
+        render();
+      })();
+    </script>
+  </body>
+  </html>

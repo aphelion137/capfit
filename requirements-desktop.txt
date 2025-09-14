@@ -1,0 +1,9 @@
+# Capfit 데스크톱 버전 의존성
+pillow>=10.2.0
+numpy>=1.26.0
+
+# GUI 프레임워크 (tkinter는 Python 표준 라이브러리에 포함)
+# tkinter는 별도 설치 불필요
+
+# 선택적 의존성 (고급 기능용)
+# pyinstaller>=5.0.0  # 실행 파일 생성용

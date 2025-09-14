@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1020" />
+    <title>Capfit · 대화 캡처 2단 PDF</title>
+    <meta name="description" content="긴 카톡 캡처를 손쉽게 A4 세로 2단 PDF로 변환" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CAPFIT" />
+    <meta property="og:title" content="CAPFIT · 대화 캡처 2단 PDF" />
+    <meta property="og:description" content="긴 캡처를 신뢰 있게 정리해 바로 쓰는 2단 PDF" />
+    <meta property="og:url" content="{{ page_url if page_url else '' }}" />
+    <meta property="og:image" content="{{ (base_url + '/og.png') if base_url else '/og.png' }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CAPFIT · 대화 캡처 2단 PDF" />
+    <meta name="twitter:description" content="긴 캡처를 신뢰 있게 정리해 바로 쓰는 2단 PDF" />
+    <meta name="twitter:image" content="{{ (base_url + '/og.png') if base_url else '/og.png' }}" />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">🐱 CAPFIT</div>
+      <div class="subtitle">긴 캡처를 A4 세로 2단 PDF로</div>
+      <p class="tagline">긴 카톡 캡처, 신뢰 있게 정리해 바로 쓰는 2단 PDF</p>
+    </header>
+
+    <main class="container">
+      <section class="grid-2">
+        <div class="card">
+          <h2>이미지 업로드</h2>
+          <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+            <div class="field">
+              <label for="file">캡처 이미지</label>
+              <input id="file" name="files" type="file" accept="image/*" multiple required />
+              <div id="file-hint" class="file-hint" aria-live="polite"></div>
+              <div id="order-warning" class="order-warning hidden">이 브라우저에선 순서/삭제가 제한될 수 있어요. 변경 후 업로드가 반영되지 않으면 다시 선택해 주세요.</div>
+              <div id="thumb-list" class="thumb-list" aria-live="polite"></div>
+              <div class="thumb-actions">
+                <button id="clear-all" type="button" class="btn">전체 지우기</button>
+              </div>
+            </div>
+            <div class="grid controls-grid">
+              <div class="field">
+                <label for="dpi">DPI</label>
+                <input id="dpi" name="dpi" type="number" value="220" min="72" max="220" />
+              </div>
+              <div class="field">
+                <label for="margin">여백(px)</label>
+                <input id="margin" name="margin" type="number" value="60" min="0" />
+                <input id="margin-range" type="range" min="0" max="200" value="60" />
+              </div>
+              <div class="field">
+                <label for="gutter">거터(px)</label>
+                <input id="gutter" name="gutter" type="number" value="50" min="0" />
+                <input id="gutter-range" type="range" min="0" max="200" value="50" />
+              </div>
+              
+            </div>
+            <div class="actions">
+              <button class="btn primary" type="submit">PDF로 변환</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card preview-card">
+          <div class="preview-header">
+            <h2>레이아웃 미리보기</h2>
+            <div class="hint">A4 비율 데모 (상대 크기)</div>
+          </div>
+          <div class="preview">
+            <div class="page" id="page">
+              <div class="page-inner" id="page-inner">
+                <div class="column left" id="col-left"></div>
+                <div class="gutter" id="gutter-el"></div>
+                <div class="column right" id="col-right"></div>
+              </div>
+            </div>
+          </div>
+          <ul class="legend">
+            <li><span class="swatch margin"></span>여백</li>
+            <li><span class="swatch gutter"></span>거터</li>
+            <li><span class="swatch content"></span>콘텐츠</li>
+          </ul>
+        </div>
+      </section>
+
+      <footer class="footer">© 2025 Capfit · v{{ version }}</footer>
+    </main>
+    <div class="mobile-cta">
+      <button class="btn primary" type="submit" form="upload-form">PDF로 변환</button>
+    </div>
+    
+    <script src="/static/app.js"></script>
+  </body>
+  </html>

@@ -7,6 +7,7 @@
 # 출력물/결과물
 outputs/
 out/
+web/jobs/
 capfit/web/jobs/
 
 # 예제/샘플 데이터

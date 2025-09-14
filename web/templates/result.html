@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1020" />
+    <title>Capfit · 변환 결과</title>
+    <meta name="description" content="긴 캡처를 2단 PDF로 변환한 결과 페이지" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CAPFIT" />
+    <meta property="og:title" content="CAPFIT · 변환 결과" />
+    <meta property="og:description" content="긴 캡처를 신뢰 있게 정리해 바로 쓰는 2단 PDF" />
+    <meta property="og:url" content="{{ page_url if page_url else '' }}" />
+    <meta property="og:image" content="{{ (base_url + '/og.png') if base_url else '/og.png' }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CAPFIT · 변환 결과" />
+    <meta name="twitter:description" content="긴 캡처를 신뢰 있게 정리해 바로 쓰는 2단 PDF" />
+    <meta name="twitter:image" content="{{ (base_url + '/og.png') if base_url else '/og.png' }}" />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">🐱 CAPFIT</div>
+      <div class="subtitle">변환 결과</div>
+      <p class="tagline">긴 카톡 캡처, 신뢰 있게 정리해 바로 쓰는 2단 PDF</p>
+    </header>
+
+    <main class="container">
+      <section class="card center">
+        {% if ready %}
+          <h2>PDF 생성 완료</h2>
+          <a class="btn primary" href="/download/{{ job_id }}">다운로드</a>
+          <div class="spacer"></div>
+          <a class="btn" href="/">다른 파일 변환</a>
+        {% else %}
+          <h2>처리 중...</h2>
+          <p>잠시 후 자동 새로고침 됩니다.</p>
+          <meta http-equiv="refresh" content="1">
+        {% endif %}
+      </section>
+      <footer class="footer">© 2025 Capfit · v{{ version }}</footer>
+    </main>
+  </body>
+  </html>
