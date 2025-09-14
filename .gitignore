@@ -24,5 +24,6 @@ dist/
 
 # Python 패키징 파일
 *.egg-info/
+capfit.egg-info/*
 build/
 dist/

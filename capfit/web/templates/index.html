@@ -4,25 +4,25 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0b1020" />
-    <title>Capfit · 대화 캡처 2단 PDF</title>
-    <meta name="description" content="긴 카톡 캡처를 손쉽게 A4 세로 2단 PDF로 변환" />
+    <title>CAPFIT · 카톡 대화 캡처를 쉽고 깔끔하게 PDF로!</title>
+    <meta name="description" content="긴 카카오톡 대화 캡처를 쉽고 빠르게 편집하여 A4 2단 PDF로 변환하는 도구입니다." />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="CAPFIT" />
-    <meta property="og:title" content="CAPFIT · 대화 캡처 2단 PDF" />
-    <meta property="og:description" content="긴 캡처를 신뢰 있게 정리해 바로 쓰는 2단 PDF" />
+    <meta property="og:title" content="CAPFIT · 카톡 대화 캡처를 쉽고 깔끔하게 PDF로!" />
+    <meta property="og:description" content="긴 카카오톡 대화 캡처를 빠르게 정리하여 바로 쓸 수 있는 2단 PDF로 변환합니다." />
     <meta property="og:url" content="{{ page_url if page_url else '' }}" />
     <meta property="og:image" content="{{ (base_url + '/og.png') if base_url else '/og.png' }}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="CAPFIT · 대화 캡처 2단 PDF" />
-    <meta name="twitter:description" content="긴 캡처를 신뢰 있게 정리해 바로 쓰는 2단 PDF" />
+    <meta name="twitter:title" content="CAPFIT · 카톡 대화 캡처를 쉽고 깔끔하게 PDF로!" />
+    <meta name="twitter:description" content="긴 카카오톡 대화 캡처를 빠르게 정리하여 바로 쓸 수 있는 2단 PDF로 변환합니다." />
     <meta name="twitter:image" content="{{ (base_url + '/og.png') if base_url else '/og.png' }}" />
     <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
     <header class="header">
       <div class="brand">🐱 CAPFIT</div>
-      <div class="subtitle">긴 캡처를 A4 세로 2단 PDF로</div>
-      <p class="tagline">긴 카톡 캡처, 신뢰 있게 정리해 바로 쓰는 2단 PDF</p>
+      <div class="subtitle">긴 카카오톡 대화 캡처를 쉽고 깔끔하게 PDF로 변환</div>
+      <p class="tagline">여러 장의 대화 캡처 이미지를 빠르게 정리하고, 바로 활용할 수 있는 2단 PDF로 만들어주는 도구입니다.</p>
     </header>
 
     <main class="container">
@@ -34,7 +34,7 @@
               <label for="file">캡처 이미지</label>
               <input id="file" name="files" type="file" accept="image/*" multiple required />
               <div id="file-hint" class="file-hint" aria-live="polite"></div>
-              <div id="order-warning" class="order-warning hidden">이 브라우저에선 순서/삭제가 제한될 수 있어요. 변경 후 업로드가 반영되지 않으면 다시 선택해 주세요.</div>
+              <div id="order-warning" class="order-warning hidden">이 브라우저에서는 순서/삭제가 제한될 수 있습니다. 변경 후 업로드가 반영되지 않으면 다시 선택해 주세요.</div>
               <div id="thumb-list" class="thumb-list" aria-live="polite"></div>
               <div class="thumb-actions">
                 <button id="clear-all" type="button" class="btn">전체 지우기</button>
@@ -85,7 +85,7 @@
         </div>
       </section>
 
-      <footer class="footer">© 2025 Capfit · v{{ version }}</footer>
+      <footer class="footer">© 2025 Capfit · v1.0.0</footer>
     </main>
     <div class="mobile-cta">
       <button class="btn primary" type="submit" form="upload-form">PDF로 변환</button>
